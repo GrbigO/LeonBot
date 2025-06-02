@@ -1,0 +1,26 @@
+*.py[cod]
+.*
+!.github
+!.gitignore
+
+
+*.log
+*.pot
+*.pyc
+
+
+
+__pycache__/
+build/
+coverage/
+dist/
+*\.egg*
+# data
+/media/
+/static/
+# Environments
+.env
+.venv
+
+# for dev testing
+test.py
