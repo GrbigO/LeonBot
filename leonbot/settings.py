@@ -8,7 +8,7 @@ from django.conf import global_settings
 
 
 def empty() -> NoReturn:
-    raise
+    pass
 
 def get_env(
     key: str,
@@ -43,7 +43,8 @@ SECRET_KEY = None
 
 
 INSTALLED_APPS = [
-    "leonbot.conf"
+    "leonbot.conf",
+    "leonbot.account",
 ]
 
 MIDDLEWARE = ["django.middleware.security.SecurityMiddleware"]
@@ -68,6 +69,6 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 AI_MODEL_NAME = "leon-ai"
-AI_TEXT_TRAIN_PATH: str = "C:\\Users\\Mohammad\\Desktop\\amozesh_qam_for_amirkhande.txt"
-GPT2_TOKENNIZER_PATH: str = "D:\\Ashkan\\model"
-GPT2_LMHEADMODEL_PATH: str = "D:\\Ashkan\\model"
+AI_TEXT_TRAIN_PATH: str = get_env("AI_TEXT_TRAIN_PATH")
+GPT2_TOKENNIZER_PATH: str = get_env("GPT2_TOKENNIZER_PATH")
+GPT2_LMHEADMODEL_PATH: str = get_env("GPT2_LMHEADMODEL_PATH")
