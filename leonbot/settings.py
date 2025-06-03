@@ -1,11 +1,14 @@
 import os
 from typing import NoReturn, Any, Callable
-
+from dotenv import load_dotenv
+import dj_database_url
 
 from django.db.utils import DEFAULT_DB_ALIAS, ProgrammingError
 from django.conf import global_settings
 
 
+
+load_dotenv()
 
 def empty() -> NoReturn:
     pass
@@ -41,21 +44,24 @@ ALLOWED_HOSTS = ["*"]
 SECRET_KEY = None
 
 
-
 INSTALLED_APPS = [
-    "leonbot.conf",
+
     "leonbot.account",
+    "leonbot.core",
+    "leonbot.permission",
 ]
 
-MIDDLEWARE = ["django.middleware.security.SecurityMiddleware"]
+
+MIDDLEWARE = []
+AUTH_USER_MODEL = "account.User"
 ROOT_URLCONF = ""
 WSGI_APPLICATION = ""
 AUTH_PASSWORD_VALIDATORS = []
+AUTHENTICATION_BACKENDS = [""]
 
 
 DATABASES = {
-    DEFAULT_DB_ALIAS: {
-    }
+    DEFAULT_DB_ALIAS: dj_database_url.parse(get_env("DATABASE_URL")),
 }
 
 
@@ -68,7 +74,6 @@ USE_TZ = True
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
-AI_MODEL_NAME = "leon-ai"
-AI_TEXT_TRAIN_PATH: str = get_env("AI_TEXT_TRAIN_PATH")
-GPT2_TOKENNIZER_PATH: str = get_env("GPT2_TOKENNIZER_PATH")
-GPT2_LMHEADMODEL_PATH: str = get_env("GPT2_LMHEADMODEL_PATH")
+AI_MODEL_NAME = "leonai"
+AI_KEY = get_env("AI_KEY", None)
+OPENROUTER_PROVISION_KEY = get_env("OPENROUTER_PROVISION_KEY")
