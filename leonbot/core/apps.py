@@ -4,4 +4,4 @@ from django.apps import AppConfig
 
 
 class LeonbotConfig(AppConfig):
-	name = "leonbot.conf"
+	name = "leonbot.core"

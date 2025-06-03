@@ -1,6 +1,6 @@
 from telegram.ext import ApplicationBuilder
 
-from leonbot.botconf.configs import Config
+from leonbot.core import Config
 
 if __name__ == "__main__":
     TOKEN = "7519884445:AAEvY5JIIQVQWyQJu6h-AoEEuc6CVIixaO4"
