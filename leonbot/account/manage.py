@@ -1,10 +1,10 @@
 from django.db.models import Q
 
-from models import User
+from .models import User
 
 
 
-class AccountManage:
+class AccountManager:
 
 	@classmethod
 	async def get_user(cls, id):
