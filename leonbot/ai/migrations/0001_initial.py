@@ -10,7 +10,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("account", "0001_initial"),
-        ("core", "0001_initial"),
     ]
 
     operations = [
@@ -34,13 +33,6 @@ class Migration(migrations.Migration):
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="created_by",
                         to="account.user",
-                    ),
-                ),
-                (
-                    "descriptions",
-                    models.OneToOneField(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="core.description",
                     ),
                 ),
                 (
