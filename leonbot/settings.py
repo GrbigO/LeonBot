@@ -18,7 +18,6 @@ def empty() -> NoReturn:
 def get_env(
 		key: str,
 		default: Any = empty,
-		to_int: bool = False,
 ) -> str | Any:
 	try:
 		value = os.environ[key]
@@ -28,9 +27,12 @@ def get_env(
 
 		value = default
 
-	if to_int:
-		return int(value)
 	return value
+
+
+def to_list(text: str):
+	return [name.strip() for name in text.split(",") if name]
+
 
 
 PROJECT_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
@@ -44,14 +46,21 @@ AI_KEY = get_env("AI_KEY", None)
 OPENROUTER_PROVISION_KEY = get_env("OPENROUTER_PROVISION_KEY")
 
 TOKEN_BOT = get_env("TOKEN_BOT", None)
-GROUP_ID = get_env("GROUP_ID", None, to_int=True)
+GROUP_ID = int(get_env("GROUP_ID"))
 
 BOT_SETTING_PATH = get_env("BOT_SETTING_PATH", None)
+BAD_USER = get_env("BAD_USER", None)
+
+
+HOW_IM = get_env("HOW_IM", None)
+
+if not BAD_USER is None:
+	BAD_USER = set(to_list(BAD_USER))
 
 INSTALLED_APPS = [
 	"leonbot.account",
 	"leonbot.core",
-	"leonbot.ai"
+	"leonbot.ai",
 ]
 
 
