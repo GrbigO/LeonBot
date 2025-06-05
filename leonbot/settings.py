@@ -34,6 +34,8 @@ def to_list(text: str):
 	return [name.strip() for name in text.split(",") if name]
 
 
+# api
+API_ADDRS = "https://openrouter.ai/api/v1/chat/completions"
 
 PROJECT_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -48,7 +50,6 @@ OPENROUTER_PROVISION_KEY = get_env("OPENROUTER_PROVISION_KEY")
 TOKEN_BOT = get_env("TOKEN_BOT", None)
 GROUP_ID = int(get_env("GROUP_ID"))
 
-BOT_SETTING_PATH = get_env("BOT_SETTING_PATH", None)
 BAD_USER = get_env("BAD_USER", None)
 
 
@@ -56,6 +57,22 @@ HOW_IM = get_env("HOW_IM", None)
 
 if not BAD_USER is None:
 	BAD_USER = set(to_list(BAD_USER))
+
+
+# learn how to ues rd.
+BOT_SETTINGS = {
+	"NAME": "سگ ارمنی",
+	"REQUEST_NAME": "سگ",
+
+	"IS_LOCK": False,
+	"MODEL": "deepseek/deepseek-chat-v3-0324:free",
+	"BOT_USERNAME_LOWER": "@realleonplus_bot",
+
+	"CANCEL_MSG": "ارتباط شما با سگ ارمنی به پایان رسید"
+
+
+
+}
 
 INSTALLED_APPS = [
 	"leonbot.account",
