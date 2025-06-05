@@ -1,75 +1,69 @@
-import time
 from typing import Any
 
 from django.conf import settings as django_settings
 
-
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
-	ApplicationBuilder,
 	MessageHandler,
 	filters,
 	ContextTypes,
-	CommandHandler,
+	ConversationHandler,
+	CallbackQueryHandler,
 )
 
-from ..account.manage import AccountManager
-from .enums import LeonDSL
-from .commands import help_command
-from ..core.bot.settings import bot_settings
+from ..botconfs import bot_settings
+from .dsl import LeonDSL
 
-admin = "@Soroosh_80"
-
-
-def get_admin_name():
-	global admin
-	return admin
-
-
-def set_admin_name(value):
-	global admin
-	admin = value
-
+WITH = [200, 5000, 40000]
+ACCEPT = [False, True]
 
 class ChatManager:
+	KEY_BOARD = [
+		InlineKeyboardButton("help", callback_data="help")
+	]
+	MENTION_TYPE = "mention"
 
 	@classmethod
-	async def is_valid_request(cls, message, context) -> Any:
-		if message:
-			group_id = message.chat.id
-			if group_id == django_settings.GROUP_ID and not message.from_user.is_bot:
+	async def is_request_for_what(cls, message, context) -> Any:
+		is_request_for_ai = False
 
-				print(message.from_user.id)
+		is_reply_to_bot = (
+				message.reply_to_message and
+				message.reply_to_message.from_user and
+				message.reply_to_message.from_user.is_bot
+		)
 
-				is_reply_to_bot = (
-						message.reply_to_message and
-						message.reply_to_message.from_user and
-						message.reply_to_message.from_user.is_bot
-				)
+		is_mentioned = False
+		if message.entities:
+			for entity in message.entities:
+				if entity.type == cls.MENTION_TYPE:
+					mention_text = message.text[entity.offset:entity.offset + entity.length]
+					if mention_text.lower() == bot_settings.BOT_USERNAME_LOWER:
+						is_mentioned = True
+						break
 
-				is_mentioned = False
-				if message.entities:
-					for entity in message.entities:
-						if entity.type == 'mention':
-							mention_text = message.text[entity.offset:entity.offset + entity.length]
-							if mention_text.lower() == f"@{context.bot.username.lower()}":
-								is_mentioned = True
-								break
-				if is_reply_to_bot or is_mentioned:
-					return (True, None)
+		if is_reply_to_bot or is_mentioned:
+			is_request_for_ai = True
 
-				splx = message.text.split()
+		text_split: list[str] = list(map(lambda x: x.strip().lower(), message.text.split()))
+		set_text_split = set(text_split)
 
-				if "سگ" in splx:
-					return (False, django_settings.HOW_IM)
+		if bot_settings.REQUEST_NAME.lower() in set_text_split:
+			return (is_request_for_ai, django_settings.HOW_IM)
 
-				if set(splx) & LeonDSL.__all__:
-					return (True, splx)
-		return (False, None)
+		elif set_text_split & LeonDSL.__all__:
+			is_request_for_ai = False
+			return (is_request_for_ai, text_split)
+
+		else:
+			# request for ai or not
+			return (is_request_for_ai, None)
 
 	@classmethod
+	@valid_request
 	async def message_handler(cls, update: Update, context: ContextTypes.DEFAULT_TYPE):
-		is_valid, msg = await cls.is_valid_request(update.message, context)
+
+		is_request_for_ai, text, message, context = await cls.is_valid_request(update.message, context)
 		if not is_valid and msg:
 			await update.message.reply_text(text=msg, reply_to_message_id=update.message.message_id)
 
@@ -83,9 +77,29 @@ class ChatManager:
 			if not new_text is None:
 				await update.message.reply_text(text=new_text, **settings)
 
+	@classmethod
+	async def start_bot(cls, update: Update, context: ContextTypes.DEFAULT_TYPE):
+		reply_markup = InlineKeyboardMarkup([cls.KEY_BOARD])
+
+		await update.message.reply_text(
+			"",
+			reply_to_message_id=update.message.message_id,
+			reply_markup=reply_markup,
+		)
 
 
 HANDLERS = [
 	MessageHandler(filters.TEXT & (~filters.COMMAND), ChatManager.message_handler),
-	CommandHandler("help", help_command),
+	ConversationHandler(
+		entry_points=[
+			# CallbackQueryHandler(start_register, pattern="^start_register$"),
+			# CallbackQueryHandler(handle_option1, pattern="^option1$"),
+			# CallbackQueryHandler(handle_option2, pattern="^option2$"),
+		],
+		states={
+			ASK_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_name)],
+			ASK_AGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_age)],
+		},
+		fallbacks=[],
+	)
 ]
