@@ -3,96 +3,109 @@ import httpx
 from django.conf import settings as django_settings
 
 from .models import AI
-from leonbot.botconfs import bot_settings
 from ..account.models import User
+from ..botconfs import bot_settings
+from ..chat.utils import slash_n
+from ..core.handlers import UpdateHandler
+from ..core.request import UserRequest
+from ..core.enums import BOTEnum
+
+from .utils import (
+	get_default_name,
+	update_msg_log,
+	user_not_auth_in_this_group,
+)
 
 
-CACHE_AIMODEL: dict[int, AI] | dict = {}
 
 class AIRequestHandler:
 
 
+	ROLE = "role"
+	CONTENT = "content"
 
 	SYSTEM_ROLE = "system"
 	USER_ROLE = "user"
 	AI_ROLE = "assistant"
 
-	content_type = "application/json"
+	DEFAULT_SETTINGS = {"reply_to_message_id": message.message_id}
+
+	DEFAULT_HEADERS = {
+		"Authorization":f"Bearer {django_settings.API_KEY}",
+		"Content-Type":"application/json"
+	}
 
 	@classmethod
-	async def load_aimodel(cls, chat_id: int):
-		global CACHE_AIMODEL
-		aimodel = cls.CACHE_AIMODEL.get(chat_id, None)
+	def set_stores(cls, stores: dict):
+		list_of_stores: list[dict] = []
+		for user_name, user_store in stores.values():
+			content = BOTEnum.IM.value + user_name + BOTEnum.DONT_CALL_ME.value + slash_n() + user_store
+			list_of_stores.append(
+				{
+					cls.ROLE: cls.SYSTEM_ROLE,
+					cls.CONTENT: content
+				}
+			)
+		return list_of_stores
 
-		if not aimodel:
-			try:
-				aimodel = await AI.objects.aget(chat_id=chat_id)
-			except AI.DoesNotExist:
-				pass
 
+
+	@classmethod
+	def generate_msg(cls, request: UserRequest):
+		msgs = []
+		instance: AI | User = request.instance
+		user = request.metadata.effective_user
+		name = get_default_name(user=user)
+
+		if instance.deep:
+			msgs.append({cls.ROLE: cls.SYSTEM_ROLE, cls.CONTENT: instance.deep})
+
+		if request.in_group:
+
+			if instance.stores.get(user.id) is None:
+				request.funcs.append(user_not_auth_in_this_group)
 			else:
-				cls.CACHE_AIMODEL.update({chat_id: aimodel})
+				name = instance.stores[user.id][0]
 
-		return aimodel
+			msgs.extend(cls.set_stores(instance.stores))
 
-	@classmethod
-	async def generate_msg(cls, text, chat_id, aimodel: AI, user_name=None):
-		msg = []
-		if aimodel.STORES_CACHE is None:
-			for key, value in aimodel.stores:
-				msg.append({"role": cls.SYSTEM_ROLE, "content": key + " " + value})
-			aimodel.STORES_CACHE = msg
-			cls.CACHE_AIMODEL[chat_id] = aimodel
-		else:
-			msg.extend(aimodel.STORES_CACHE)
 
-		msg.extend(aimodel.msg_log)
+		if instance.msg_logs:
+			msgs.extend(instance.get_msg_logs())
 
-		text = text if user_name is None else f"im {user_name},\n{text}"
+		text = f"{BOTEnum.IM.value + name + BOTEnum.DONT_CALL_ME.value},\n{request.message}"
 
-		msg.append({"role": cls.USER_ROLE, "content": text})
+		msgs.append({cls.ROLE: cls.USER_ROLE, cls.CONTENT: text})
 
-		return msg
+		return (msgs, request)
 
 	@classmethod
-	async def new_request(cls, message) -> tuple[Optional[str], dict]:
+	async def new_request(cls, messages: list[dict], request: UserRequest) -> UserRequest:
 
-		chat_id = message.chat.id
-		aimodel = cls.load_aimodel(chat_id)
-
-		if aimodel is None:
-			return "", {}
-
-		# user input
-		text = message.text
-
-		headers = {
-			"Authorization": f"Bearer {django_settings.API_KEY}",
-			"Content-Type": cls.content_type,
-		}
-
-		try:
-			user_name = await User.objects.aget(id=message.from_user.id).name
-		except (User.DoesNotExist, AttributeError):
-			user_name = f"{message.from_user.full_name + " dog"}"
-
-		messages = await cls.generate_msg(text, chat_id, aimodel, user_name)
 		data = {
-			# "model": cls.AIMODEL[0].ai_models.get(bot_settings.ACTIVE_MODEL, bot_settings.DEFAULT_MODEL),
-			"model": aimodel.active_model,
+			"model": request.instance.active_model,
 			"messages": messages,
 		}
-		try:
-			async with httpx.AsyncClient() as client:
-				response = await client.post(bot_settings.AI_URL, headers=headers, json=data)
-		except Exception as e:
-			return None, {}
+
+		ai_output = await cls.send_request(
+			data=data,
+			headers=cls.DEFAULT_HEADER,
+		)
+
+		request.funcs.append(update_msg_log)
+		request.ai_output = ai_output
+
+		return request
+
+
+	@staticmethod
+	async def send_request(data: dict, headers: dict):
+
+		async with httpx.AsyncClient() as client:
+			response = await client.post(django_settings.API_ADDERS, headers=headers, json=data)
 
 		if response.status_code == 200:
-			ai_output = response.json()["choices"][0]["message"]["content"]
 
-			return (ai_output, {"reply_to_message_id": message.message_id})
-		else:
-			print("bug")
-			print(response.json())
-			return "!bug from ostad", {}
+			return response.json()["choices"][0]["message"]["content"]
+
+		return None

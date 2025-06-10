@@ -1,10 +1,7 @@
-import json
 from django.conf import settings
 
 
-cache_group_settings = {}
-
-def _bot_settings(chat_id=None):
+def _bot_settings():
 	data = settings.BOT_SETTINGS
 	_bot_settings.IS_AI_LOCK = data["IS_LOCK"]
 	_bot_settings.AI_URL = data["AI_URL"]

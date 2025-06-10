@@ -14,3 +14,9 @@ async def user_to_text(users):
 			)
 
 	return text
+
+async def get_user(user_id: int, username: str):
+	return await User.objects.filter(id=user_id).afirst()
+
+
+

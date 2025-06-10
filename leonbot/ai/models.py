@@ -1,28 +1,20 @@
 from django.db import models
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 
-from leonbot.core.models import ModelWithDescriptions, ModelWithDateTime
+from ..core.models import ModelWithBasicField
 
 
-class AI(ModelWithDescriptions, ModelWithDateTime):
-	name = models.CharField(max_length=50, primary_key=True, null=False, editable=False, serialize=False)
-	key = models.CharField(max_length=120)
-	msgs = models.JSONField(default=dict)
 
-	created_by = models.OneToOneField(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="created_by")
-	updated_by = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="updated_by")
+class AI(ModelWithBasicField):
+
+	id = models.IntegerField(primary_key=True)
+	stores = models.JSONField(default=dict)
+
+	users = models.ManyToManyField(to=settings.AUTH_USER_MODEL, blank=True, related_name="ai_models")
+
+	NAME = "Leon AI"
+	VERSION = "v1"
 
 	class Meta:
 		db_table = "ai_model"
-
-	def get_description(self) -> set[str]:
-		return {
-			self.description0,
-			self.description1,
-			self.description2,
-			self.description3,
-		}
-
-
-def update_msg(user_value, ai_value, old_values):
-	return NotImplemented

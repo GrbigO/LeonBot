@@ -35,42 +35,38 @@ def to_list(text: str):
 
 
 # api
-API_ADDRS = "https://openrouter.ai/api/v1/chat/completions"
+API_ADDERS = "https://openrouter.ai/api/v1/chat/completions"
+TOKEN_BOT = get_env("TOKEN_BOT", None)
+
 
 PROJECT_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+
 
 DEBUG = False
 ALLOWED_HOSTS = ["*"]
 SECRET_KEY = None
 
-AI_MODEL_NAME = "leonai"
-AI_KEY = get_env("AI_KEY", None)
+
+API_KEY = get_env("API_KEY", None)
 OPENROUTER_PROVISION_KEY = get_env("OPENROUTER_PROVISION_KEY")
 
-TOKEN_BOT = get_env("TOKEN_BOT", None)
-GROUP_ID = int(get_env("GROUP_ID"))
 
-BAD_USER = get_env("BAD_USER", None)
-
-
-HOW_IM = get_env("HOW_IM", None)
-
-if not BAD_USER is None:
-	BAD_USER = set(to_list(BAD_USER))
 
 
 # learn how to ues rd.
 BOT_SETTINGS = {
-	"NAME": "سگ ارمنی",
-	"REQUEST_NAME": "سگ",
+	"NAME": "Leon",
+	"REQUEST_NAME": set(get_env("REQUEST_NAME").split()),
 
 	"IS_LOCK": False,
 	"MODEL": "deepseek/deepseek-chat-v3-0324:free",
-	"BOT_USERNAME_LOWER": "@realleonplus_bot",
+	"BOT_USERNAME": "@LE0NAI_bot",
+	"MENTION_TYPE": "mention",
+	"GROUP_TYPE":  {"group", "supergroup"},
+	"PV_TYPE": "private",
 
-	"CANCEL_MSG": "ارتباط شما با سگ ارمنی به پایان رسید"
-
-
+	"MAX_LENGTH_FOR_CALL_BOT": 100,
+	"MAX_MSG_LOGS": int(get_env("MAX_MSG_LOGS", 30)),
 
 }
 
