@@ -6,7 +6,7 @@ from leonbot.botconfs import bot_settings
 
 
 
-def is_valid_request(message: Update.message):
+def not_bot(message: Update.message):
 	# If user is a bot request not valid
 	return not message.from_user.is_bot
 
