@@ -6,7 +6,7 @@ from telegram.ext import (
 	ConversationHandler,
 )
 
-from .utils import is_valid_request
+from .utils import not_bot
 from ..ai.handlers import AIRequestHandler
 from ..core.handlers import get_request
 from ..core.request import UserRequest
@@ -21,7 +21,7 @@ class ChatManager:
 
 	@classmethod
 	async def new_chat(cls, update: Update, context: ContextTypes.DEFAULT_TYPE):
-		if is_valid_request(update.message):
+		if not_bot(update.message):
 			request: UserRequest = await get_request(update)
 
 			if request is not None:
@@ -51,17 +51,6 @@ class ChatManager:
 			instance = response.instance
 			if instance.updated_field:
 				await instance.asave(update_fields=instance.updated_field)
-
-
-	@classmethod
-	async def start_bot(cls, update: Update, context: ContextTypes.DEFAULT_TYPE):
-		reply_markup = InlineKeyboardMarkup([cls.KEY_BOARD])
-
-		await update.message.reply_text(
-			"",
-			reply_to_message_id=update.message.message_id,
-			reply_markup=reply_markup,
-		)
 
 
 HANDLERS = [
