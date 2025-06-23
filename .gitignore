@@ -21,6 +21,3 @@ dist/
 # Environments
 .env
 .venv
-
-# for dev testing
-test.py
