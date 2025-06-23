@@ -54,24 +54,26 @@ BOT_SETTINGS = {
 	"TOKEN_BOT": get_env("TOKEN_BOT", None),
 	"REQUEST_NAME": get_env("REQUEST_NAME").split(","),
 
-	"BOT_USERNAME": "@LE0NAI_bot",
+	"USERNAME": "@LE0NAI_bot",
 	"GROUP_MAX_LENGTH": 8,
-	"MAX_LENGTH_FOR_CALL_BOT": 100,
 	"MAX_MSG_LOGS": int(get_env("MAX_MSG_LOGS", 200)),
 
-	"MAX_REQUEST_FOR_SECONDS": 10,
 	"START_MSG": "  If you don't know what this bot is for,\n"
 				 "  what it does,\n"
 				 "  or how to use it,\n"
 				 "  select the -Help- option.\n"
 }
 
+
 INSTALLED_APPS = [
+	# Django modules
+	"django.contrib.contenttypes",
 	"django.contrib.postgres",
-
-
-	"leonbot.core",
-	"leonbot.plugin3"
+	# Local apps
+	"leonbot.bot",
+	"leonbot.ai",
+	"leonbot.permission",
+	"leonbot.plugin3",
 ]
 
 MIDDLEWARE = []
