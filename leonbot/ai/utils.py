@@ -1,6 +1,6 @@
 from telegram import Update
 
-from ..core import models
+from ..bot import models
 
 
 def get_default_name(user: Update.effective_user) -> str:
@@ -14,7 +14,7 @@ def get_system_name(instance: models.BOT, user: Update.effective_user) -> str:
 		return name
 
 
-def get_name(instance, user) -> str:
+def get_name(instance: models.BOT, user) -> str:
 	name = get_system_name(instance, user) or get_default_name(user)
 	return name
 
