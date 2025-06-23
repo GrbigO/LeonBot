@@ -1,44 +1,29 @@
 from telegram import Update
 
-from .handlers import AIRequestHandler
-from ..botconfs import bot_settings
-from ..core.request import UserRequest
+from ..core import models
 
 
 def get_default_name(user: Update.effective_user) -> str:
 	return user.full_name or user.username or ""
 
 
-def user_not_auth_in_this_group(request: UserRequest):
-	instance = request.instance
-	key = request.metadata.effective_user.id
-	name = get_default_name(request.metadata.effective_user)
-
-	store = bot_settings.GET_RANDOM_STORE(name)
-
-	values = (name, store)
-
-	instance.stores.update({key: values})
-	instance.updated_field.append("stores")
-	return request
+def get_system_name(instance: models.BOT, user: Update.effective_user) -> str:
+	store_data = instance.ai.stores.get(user.id)
+	if store_data:
+		name = store_data[0]
+		return name
 
 
-def update_msg_log(request: UserRequest):
-	instance = request.instance
-	instance.msg_logs.append(
-		{
-			AIRequestHandler.ROLE: AIRequestHandler.USER_ROLE,
-			AIRequestHandler.CONTENT: request.message
-		}
-	)
+def get_name(instance, user) -> str:
+	name = get_system_name(instance, user) or get_default_name(user)
+	return name
 
-	if request.ai_output is not None:
-		instance.msg_logs.append(
-			{
-				AIRequestHandler.ROLE: AIRequestHandler.AI_ROLE,
-				AIRequestHandler.CONTENT: request.ai_output,
-			}
-		)
+def rework_name(name, max_length) -> str:
+	if len(name) > max_length:
+		name = name[:max_length - 3] + "..."
+	return name
 
-	instance.updated_field.append("msg_logs")
-	return instance
+
+def is_auth_this_group(instance: models.BOT, user) -> bool:
+	store_data = instance.ai.stores.get(user.id)
+	return store_data is not None
