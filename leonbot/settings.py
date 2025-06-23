@@ -1,24 +1,24 @@
 import os
-from typing import NoReturn, Any, Callable
+from typing import Any
 
+
+import dj_database_url
 from django.utils.module_loading import import_string
 from dotenv import load_dotenv
-import dj_database_url
 
-from django.db.utils import DEFAULT_DB_ALIAS, ProgrammingError
+
+from django.utils.functional import empty
+from django.db.utils import DEFAULT_DB_ALIAS
 from django.conf import global_settings
+
+
+
 
 load_dotenv()
 
 
-def empty() -> NoReturn:
-	pass
 
-
-def get_env(
-		key: str,
-		default: Any = empty,
-) -> str | Any:
+def get_env(key: str, default: Any = empty) -> str | Any:
 	try:
 		value = os.environ[key]
 	except KeyError:
@@ -36,46 +36,43 @@ def to_list(text: str):
 
 # api
 API_ADDERS = "https://openrouter.ai/api/v1/chat/completions"
-TOKEN_BOT = get_env("TOKEN_BOT", None)
-
 
 PROJECT_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 
-
 DEBUG = False
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = []
 SECRET_KEY = None
 
-
 API_KEY = get_env("API_KEY", None)
+WEBHOOK_KEY = get_env("WEBHOOK_KEY", None)
 OPENROUTER_PROVISION_KEY = get_env("OPENROUTER_PROVISION_KEY")
-
-
 
 
 # learn how to ues rd.
 BOT_SETTINGS = {
 	"NAME": "Leon",
-	"REQUEST_NAME": set(get_env("REQUEST_NAME").split()),
+	"TOKEN_BOT": get_env("TOKEN_BOT", None),
+	"REQUEST_NAME": get_env("REQUEST_NAME").split(","),
 
-	"IS_LOCK": False,
-	"MODEL": "deepseek/deepseek-chat-v3-0324:free",
 	"BOT_USERNAME": "@LE0NAI_bot",
-	"MENTION_TYPE": "mention",
-	"GROUP_TYPE":  {"group", "supergroup"},
-	"PV_TYPE": "private",
-
+	"GROUP_MAX_LENGTH": 8,
 	"MAX_LENGTH_FOR_CALL_BOT": 100,
-	"MAX_MSG_LOGS": int(get_env("MAX_MSG_LOGS", 30)),
+	"MAX_MSG_LOGS": int(get_env("MAX_MSG_LOGS", 200)),
 
+	"MAX_REQUEST_FOR_SECONDS": 10,
+	"START_MSG": "  If you don't know what this bot is for,\n"
+				 "  what it does,\n"
+				 "  or how to use it,\n"
+				 "  select the -Help- option.\n"
 }
 
 INSTALLED_APPS = [
-	"leonbot.account",
-	"leonbot.core",
-	"leonbot.ai",
-]
+	"django.contrib.postgres",
 
+
+	"leonbot.core",
+	"leonbot.plugin3"
+]
 
 MIDDLEWARE = []
 AUTH_USER_MODEL = "account.User"
@@ -96,8 +93,7 @@ USE_TZ = True
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
-if GROUP_ID is None:
-	N = NotImplemented
+# if GROUP_ID is None:
 
-if AI_KEY is None:
-	N = NotImplemented
+
+# if API_KEY is None:
