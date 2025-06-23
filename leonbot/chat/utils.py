@@ -1,42 +1,66 @@
 from telegram import Update
+from telegram.constants import ChatMemberStatus
 from telegram.ext import ContextTypes
 
-from leonbot.botconfs import bot_settings
+from ..bot import models
+from ..core.type import Text
+from ..botconfs import bot_settings
 
 
-
-
-def not_bot(message: Update.message):
+def is_bot(update: Update) -> bool:
 	# If user is a bot request not valid
-	return not message.from_user.is_bot
+	return update.effective_user.is_bot
+
+def is_link(update: Update) -> bool:
+	entities = update.message.entities
+	for entity in entities:
+		if entity.type in bot_settings.Type.LINK:
+			return True
+
+	return Text.is_link(update.message.text)
 
 
+async def get_chat_member(update: Update):
+	chat_id = update.effective_chat.id
+	user_id = update.effective_user.id
 
-async def is_user_admin_from_this_group(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
-    chat_id = update.effective_chat.id
-    user_id = update.effective_user.id
-
-    member = await context.bot.get_chat_member(chat_id, user_id)
-
-    if member.status in ["administrator", "creator"]:
-        return True
-
-    return False
+	return await context.bot.get_chat_member(chat_id, user_id)
 
 
-def slash_t(x: int | None = None):
-	return "\t" * x if x else "\t"
+async def is_admin_from_this_group(update: Update) -> bool:
+	user = await get_chat_member(update)
+
+	if user.status == ChatMemberStatus.ADMINISTRATOR:
+		return True
+
+	elif user.status == ChatMemberStatus.OWNER:
+		return True
+
+	return False
 
 
-def slash_n(x: int | None = None):
-	return "\n" * x if x else "\n"
+async def is_default_member_in_this_group(update: Update) -> bool:
+	user = await get_chat_member(update)
+
+	if user.status == ChatMemberStatus.MEMBER:
+		return True
+
+	elif user.status == ChatMemberStatus.ADMINISTRATOR:
+		return True
+
+	elif user.status == ChatMemberStatus.OWNER:
+		return True
+
+	return False
+
+def get_id_for_mention_user(update: Update, instance: models.BOT):
+	name = update.effective_user.username
+	if name is None:
+		name = get_random_shit(ad=slash_t(2)) + instance.ai.stores.get(update.effective_user.id, None)
+	else:
+		name = "@" + name
+
+	# None or not None
+	return name
 
 
-def get_emoji(name=None):
-	emojis = {
-		1: "🥹", 2: "🤬", 3: "😤", 4: "🫠", 5: "😾",
-		6: "🤢", 7: "🤮", 8: "👹", 9: "🤰🏿", 10: "🎅🏿",
-		11: "👵🏿", 12: "🥶"
-	}
-
-	return emojis[random.randint(1, 12)]
