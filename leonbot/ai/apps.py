@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
 
-class AIConfig(AppConfig):
+class AIAppConfig(AppConfig):
 	name = "leonbot.ai"
