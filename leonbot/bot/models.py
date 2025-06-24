@@ -1,13 +1,24 @@
 from django.db import models
+from django.utils import timezone
 
+from ..permission.models import PermissionsMixin
 from ..core.models import ModelWithAuthField
-from ..plugin3.abstracts import ModelWithInstallPlugin
+from ..plugin3.abstracts import ModelWithPluginInstaller
 
 
-class BOT(ModelWithAuthField, ModelWithInstallPlugin):
-	# user_id or group_id in telegram
-	telegram_id = models.BigIntegerField(primary_key=True, serialize=False)
+
+
+class BOT(ModelWithPluginInstaller, PermissionsMixin):
+	# user_id or group_id or token_bot in telegram
+	telegram_id = models.CharField(max_length=45, primary_key=True, serialize=False)
 	ai = models.OneToOneField(to="ai.AISettings", on_delete=models.CASCADE)
+	settings = models.JSONField(default=dict)
+
+	prent = models.ForeignKey(to="self", on_delete=models.CASCADE, null=True)
+
+	last_used = models.DateField(default=timezone.now)
+
 
 	def add_new_log(self, log: dict) -> None:
 		self.ai.msg_logs.append(log)
+
