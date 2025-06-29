@@ -1,5 +1,3 @@
-from os.path import join, exists
-
 from django.apps import AppConfig
 
 
