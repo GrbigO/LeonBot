@@ -1,23 +1,39 @@
-from telegram import Update
+from telegram import Update, User, MessageEntity
 from telegram.constants import ChatMemberStatus
 from telegram.ext import ContextTypes
 
+
+from django.utils.functional import empty
+
+
+from ..ai.handlers import AIRequestHandler
 from ..bot import models
-from ..core.type import Text
+from ..core.type import is_bool
 from ..botconfs import bot_settings
 
 
-def is_bot(update: Update) -> bool:
+def is_bot(user: User) -> bool:
 	# If user is a bot request not valid
-	return update.effective_user.is_bot
+	return user.is_bot
 
-def is_link(update: Update) -> bool:
-	entities = update.message.entities
-	for entity in entities:
-		if entity.type in bot_settings.Type.LINK:
+async def is_link(message_entities: list[MessageEntity], message_text: str) -> bool:
+	for entity in message_entities:
+		if entity.type in bot_settings.Type["LINK"]:
 			return True
 
-	return Text.is_link(update.message.text)
+	return False
+	# ai = AIRequestHandler
+	# ai_output = await ai.new_request(
+	# 	messages=[brain3164, ai.new_ai_input(ai.USER_ROLE, message_text)],
+	# 	instance=bot_settings
+	# )
+	# is_valid = is_bool(ai_output)
+	# if is_valid is empty:
+	# 	# lol if empty im ban user-request for 2 min
+	# 	# bucausse brain3164 handle chiat
+	# 	pass
+	#
+	# return is_valid
 
 
 async def get_chat_member(update: Update):
@@ -53,7 +69,7 @@ async def is_default_member_in_this_group(update: Update) -> bool:
 
 	return False
 
-def get_id_for_mention_user(update: Update, instance: models.BOT):
+def get_id_user(update: Update, instance: models.BOT):
 	name = update.effective_user.username
 	if name is None:
 		name = get_random_shit(ad=slash_t(2)) + instance.ai.stores.get(update.effective_user.id, None)
