@@ -1,63 +1,48 @@
-from telegram import Update
-
-from ..ai.models import AI
-from ..account.models import User
-from .request import UserRequest
-from .utils import (
-	is_request_for_bot,
-	is_request_for_ai,
-	is_request_in_group,
-	is_request_in_pv,
-	is_mentioned_bot,
-	is_reply_to_bot,
-	aget_or_create,
-)
-from ..botconfs import bot_settings
+from ..bot.handlers import ButtonHandler
+from ..ai.handlers import AIRequestHandler
+from ..ai.update import update_msg_log
+from ..chat.utils import get_id_user
+from ..core.request import RequestContext
+from ..core.utils import slash_n
 
 
 
 
-async def get_request(update: Update) -> UserRequest | None:
-	is_mentioned = is_mentioned_bot(update.message)
+async def bot_request_handler(request: RequestContext) -> None:
+	# if request.first_use:
+		await ButtonHandler.settings(request.update, request.context)
+	# else:
+	# 	await ButtonHandler.start_by_name(request.update, request.context)
 
-	request_for_bot = is_request_for_bot(update.message, is_mentioned)
 
 
-	request_for_ai = is_mentioned or is_reply_to_bot(update.message)
+async def ai_request_handler(request: RequestContext) -> None:
 
-	request_in_group = is_request_in_group(update)
-	request_in_pv = is_request_in_pv(update)
+	ai = AIRequestHandler
 
-	model: AI | User | None = None
-	if request_in_group and request_for_ai:
-		model = AI
-		is_ai_model = True
-
-	elif request_in_pv:
-		model = User
-		is_ai_model = False
-
-	else:
-		# if not send message for bot in pv or group return `None`
-		return model
-
-	instance = await aget_or_create(update, model, is_ai_model)
-
-	if request_for_bot:
-		return UserRequest(
-			request_for_bot=request_for_bot,
-			instance=instance,
-		)
-
-	return UserRequest(
-		request_for_ai=request_for_ai,
-		request_in_pv=request_in_pv,
-		request_in_group=request_in_group,
-		message=update.message.text,
-		instance=instance,
-		metadata=update,
+	messages, refactor_user_msg = ai.generate_msg(
+		instance=request.instance,
+		user=request.user,
+		message=request.user_msg,
+		request_in_group=request.in_group
 	)
 
+	ai_output = await ai.new_request(messages, request.instance)
 
+	if ai_output:
+		name = None
+		if request.mention_user:
+			name = get_id_user(request.update, request.instance)
 
+		ai_output = ai_output.replace("**", "").replace("*", "")
+		await request.update.message.reply_text(
+			ai_output if name is None
+			else name + slash_n() + ai_output,
+			reply_to_message_id=request.update.message.message_id
+		)
 
+	await update_msg_log(
+		instance=request.instance.ai,
+		new_log=refactor_user_msg,
+		ai_output=ai_output,
+	)
