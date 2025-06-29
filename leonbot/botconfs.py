@@ -1,44 +1,49 @@
-from typing import Callable
-import hashlib
-
 from django.conf import settings
+from django.db.utils import ProgrammingError
 
 from .bot.models import BOT
-from .core.emojis import get_emoji
-
-REQ_PER = 0
 
 
-def __set_request() -> None:
-	global REQ_PER
-	REQ_PER += 1
+def __bot_settings(reload: bool = False, **kwargs):
+	def ai_settings():
+		telegram_id = "1"
+		try:
+			mybot = BOT.objects.select_related("ai").get(telegram_id=telegram_id)
+		except BOT.DoesNotExist:
+			raise ProgrammingError(
+				"you must use this command -> python .\\manage.py initial\n"
+				"If you use this packig and not config your bot go read README.bot_settings"
+			)
 
+		for name, brain in mybot.settings.items():
+			setattr(ai_settings, name, brain)
 
-def __callback_caller(callback: Callable[..., ...]):
-	return callback()
+		ai_settings.active_model = mybot.ai.active_model
+		return ai_settings
 
+	if reload is True:
 
-async def bot_settings(init: bool = False, **kwargs):
+		__bot_settings.ai = ai_settings()
 
-	if init is True:
-		bot_settings.HANDLE_REQ = __set_request
-		bot_settings.CHOICE_CALL_BOT = (1, 2)
-		bot_settings.CALL = __callback_caller
+		__bot_settings.CHOICE_CALL_BOT = (1, 2)
 
+		__bot_settings.BOT_USERNAME = settings.BOT["USERNAME"]
+		__bot_settings.REQUEST_NAME = set(settings.BOT["REQUEST_NAME"])
+		__bot_settings.GROUP_MAX_LENGTH = settings.BOT["GROUP_MAX_LENGTH"]
+		__bot_settings.MAX_MSG_LOGS = settings.BOT["MAX_MSG_LOGS"]
 
-		bot_settings.BOT_USERNAME = settings.BOT_SETTINGS["USERNAME"]
-		bot_settings.REQUEST_NAME = settings.BOT_SETTINGS["REQUEST_NAME"]
-		bot_settings.GROUP_MAX_LENGTH = settings.BOT_SETTINGS["GROUP_MAX_LENGTH"]
-		bot_settings.START_MSG = lambda: settings.BOT_SETTINGS["START_MSG"] + get_emoji()
-
-		bot_settings.Type = {
+		__bot_settings.Type = {
 			"GROUP": ("supergroup", "group"),
-			"PV": "private",
 			"LINK": ("url", "text_link"),
+			"PV": "private"
 		}
 
 	# Return self func for reset attrs.
-	# If you call again `bot_settings` reset __all__ attribute.
-	# this option for update settings and plugins.
-	return bot_settings
+	# If you call `bot_settings()` reset __all__ attribute.
+	# this option for update bot_settings and add new attr for bot_settings.
+	global bot_settings
+	bot_settings = __bot_settings
 
+	return __bot_settings
+
+bot_settings = __bot_settings
