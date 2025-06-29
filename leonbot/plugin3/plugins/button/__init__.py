@@ -1,12 +1,12 @@
-from leonbot.bot.buttons import Button
-from ....chat.utils import slash_n
+from ....bot.enums import ButtonInfo
+from ....core.utils import slash_n
 
 
 class ButtonSort:
 	CHOICES = (
-		(132, Button.Info.name + slash_n() + Button.Models.name + slash_n() + Button.Settings.name),
-		(213, Button.Models.name + slash_n() + Button.Info.name + slash_n() + Button.Settings.name),
-		(231, Button.Models.name + slash_n() + Button.Settings.name + slash_n() + Button.Info.name),
-		(321, Button.Info.name + slash_n() + Button.Models.name + slash_n() + Button.Info.name),
-		(312, Button.Info.name + slash_n() + Button.Info.name + slash_n() + Button.Models.name),
+		(132, ButtonInfo.Info.name + slash_n() + ButtonInfo.Models.name + slash_n() + ButtonInfo.Settings.name),
+		(213, ButtonInfo.Models.name + slash_n() + ButtonInfo.Info.name + slash_n() + ButtonInfo.Settings.name),
+		(231, ButtonInfo.Models.name + slash_n() + ButtonInfo.Settings.name + slash_n() + ButtonInfo.Info.name),
+		(321, ButtonInfo.Info.name + slash_n() + ButtonInfo.Models.name + slash_n() + ButtonInfo.Info.name),
+		(312, ButtonInfo.Info.name + slash_n() + ButtonInfo.Info.name + slash_n() + ButtonInfo.Models.name),
 	)
