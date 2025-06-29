@@ -7,7 +7,7 @@ class Permission(models.Model):
 
 class PermissionsMixin(models.Model):
 
-    bot_access = models.ManyToManyField(
+    accesses = models.ManyToManyField(
         Permission,
         blank=True,
         related_name="bot_set",
