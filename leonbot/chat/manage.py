@@ -1,70 +1,48 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update
 from telegram.ext import (
-	MessageHandler,
-	filters,
 	ContextTypes,
-	ConversationHandler,
 )
 
-from .utils import not_bot
-from ..ai.handlers import AIRequestHandler
-from ..core.handlers import get_request
-from ..core.request import UserRequest
+from .utils import is_bot, is_link
+from leonbot.core.request import get_request, RequestContext
+from ..ai.update import update_msg_log
+from ..ai.utils import get_name
+from ..core.handlers import bot_request_handler, ai_request_handler
 
 
-class ChatManager:
-	KEY_BOARD = [
-		InlineKeyboardButton("help", callback_data="help")
-	]
-
-
+class ChatHandler:
 
 	@classmethod
-	async def new_chat(cls, update: Update, context: ContextTypes.DEFAULT_TYPE):
-		if not_bot(update.message):
-			request: UserRequest = await get_request(update)
+	async def new_chat(cls, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+		if update.message is None:
+			return
+		elif is_bot(update.effective_user):
+			return
+		elif await is_link(update.message.entities, update.message.text):
+			return
 
-			if request is not None:
+		request = await get_request(update, context)
+		if request is None:
+			return
 
-				await cls.request_handler(request)
-
-		return
+		await cls.request_handler(request=request)
 
 	@classmethod
-	async def request_handler(cls, request: UserRequest):
+	async def request_handler(cls, request: RequestContext) -> None:
 
 		if request.for_bot:
-			await cls.start_bot(update, context)
+			await bot_request_handler(request)
 
 		elif request.for_ai:
+			await ai_request_handler(request)
 
-			ai = AIRequestHandler
-			data = ai.generate_msg(request)
-			response = await ai.new_request(*data)
+		else:
+			# save for log
+			new_log = get_name(request.instance, request.user) + " : "+ request.user_msg
+			await update_msg_log(
+				request.instance.ai,
+				new_log,
+				None,
+			)
 
-			if response.ai_output is not None:
-				await update.message.reply_text(response.ai_output, **ai.DEFAULT_SETTINGS)
-
-			for func in response.funcs:
-				response = func(response)
-
-			instance = response.instance
-			if instance.updated_field:
-				await instance.asave(update_fields=instance.updated_field)
-
-
-HANDLERS = [
-	MessageHandler(filters.TEXT & (~filters.COMMAND), ChatManager.request_handler),
-
-	# ConversationHandler(
-	# 	entry_points=[
-	# CallbackQueryHandler(start_register, pattern="^start_register$"),
-	# CallbackQueryHandler(handle_option1, pattern="^option1$"),
-	# CallbackQueryHandler(handle_option2, pattern="^option2$"),
-	# 	],
-	# 	states={
-	#
-	# 	},
-	# 	fallbacks=[],
-	# )
-]
+		return
