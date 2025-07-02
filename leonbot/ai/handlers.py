@@ -41,9 +41,10 @@ class AIRequestHandler:
 			request_in_group: bool
 	) -> tuple[list[dict], str]:
 
-		msgs: list[dict] = []
-
-		msgs.append(cls.new_ai_input(role=cls.SYSTEM_ROLE, content=BOTBrain.get_base_brain()))
+		base = cls.new_ai_input(role=cls.SYSTEM_ROLE, content="بیشتر از 50 تا یا حداقل 100 تا کلمه پیام نده")
+		base1 = cls.new_ai_input(role=cls.AI_ROLE, content="حتما بیشتر از 50 تا یا 100 کلمه به کسی پیام نمیدم!")
+		base2 = cls.new_ai_input(role=cls.SYSTEM_ROLE, content="همیشه اون فرد رو با اسم صدا نزن پیام هایی که بهت میدم فرمتش اینجوریه : اسم کسی که پیام داده و پیامش")
+		msgs: list[dict] = [base, base1, base2]
 
 		if instance.ai.deep:
 			deep = cls.new_ai_input(role=cls.SYSTEM_ROLE, content=instance.deep)
@@ -68,7 +69,6 @@ class AIRequestHandler:
 		data = {
 			"model": "deepseek/deepseek-chat-v3-0324:free",
 			"messages": messages,
-			"max_tokens": 50,
 		}
 
 		ai_output = await cls.send_request(
