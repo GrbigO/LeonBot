@@ -29,7 +29,7 @@ class Command(BaseCommand):
 				return
 
 			mybot.delete()
-
+		BOT.objects.all().delete()
 		my_ai_settings = AISettings.objects.create()
 
 		bot_id = "1"
